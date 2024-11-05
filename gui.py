@@ -73,7 +73,8 @@ class GUI(QMainWindow):
             return
 
         if img.dtype == np.float32:
-            img = (img * 255).astype(np.uint8)
+            # img = (img * 255).astype(np.uint8)
+            img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
 
         image_resized = imutils.resize(img, width=720)
         frame = cv2.cvtColor(image_resized, cv2.COLOR_BGR2RGB)

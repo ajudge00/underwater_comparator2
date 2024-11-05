@@ -1,6 +1,24 @@
 import cv2
 import numpy as np
 from scipy.ndimage.filters import median_filter
+from .myutils import convert_dtype, ConvertFlags
+
+
+def norm_unsharp_mask_matlab(img: np.ndarray, sigma=20, N=30, gain=0.8):
+    Igauss = img.copy()
+
+    for _ in range(N):
+        Igauss = cv2.GaussianBlur(Igauss, (0, 0), sigma)
+        Igauss = np.minimum(img, Igauss)
+
+    Norm = img - gain * Igauss
+
+    Norm_eq = np.zeros_like(Norm)
+    for n in range(3):
+        Norm_eq[:, :, n] = cv2.equalizeHist((Norm[:, :, n] * 255).astype(np.uint8)) / 255.0
+
+    Isharp = (img + Norm_eq) / 2
+    return Isharp
 
 
 def norm_unsharp_mask(img: np.ndarray):
@@ -16,25 +34,10 @@ def norm_unsharp_mask(img: np.ndarray):
     """
 
     gaussian_filtered = cv2.GaussianBlur(img, (5, 5), 0)
-    difference = img - gaussian_filtered
+    diff = img - gaussian_filtered
+    normalized_diff = cv2.normalize(diff, None, 0.0, 1.0, cv2.NORM_MINMAX, cv2.CV_32F)
 
-    difference_yuv = cv2.cvtColor((255 * difference).astype(np.uint8), cv2.COLOR_BGR2YUV)
-    # equalizeHist helyett stretching legyen
-    # difference_yuv[:, :, 0] = cv2.equalizeHist(difference_yuv[:, :, 0])
-
-    ###
-    # STRETCHING
-
-    constant = ((255 - 0) / (difference_yuv.max() - difference_yuv.min())).astype(np.uint8)
-    img_stretched = difference_yuv * constant
-
-    ###
-
-    # lin_normalized = cv2.cvtColor(difference_yuv, cv2.COLOR_YUV2BGR).astype(np.float32) / 255
-
-    lin_normalized = cv2.cvtColor(img_stretched, cv2.COLOR_YUV2BGR).astype(np.float32) / 255
-
-    return (img + lin_normalized) / 2
+    return (img + normalized_diff) / 2
 
 
 def unsharp(image, sigma, strength):
