@@ -4,6 +4,18 @@ from scipy.ndimage.filters import median_filter
 from .myutils import convert_dtype, ConvertFlags
 
 
+def num2(img: np.ndarray):
+    gaussian_filtered = cv2.GaussianBlur(img, (5, 5), 0)
+    diff = img - gaussian_filtered
+
+    min_val = np.min(diff)
+    max_val = np.max(diff)
+
+    stretched_img = (diff - min_val) / (max_val - min_val)
+
+    return (img + stretched_img) / 2
+
+
 def norm_unsharp_mask_matlab(img: np.ndarray, sigma=20, N=30, gain=0.8):
     Igauss = img.copy()
 
