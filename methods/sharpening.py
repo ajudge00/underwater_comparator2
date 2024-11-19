@@ -45,11 +45,15 @@ def norm_unsharp_mask(img: np.ndarray):
     :return: S
     """
 
-    gaussian_filtered = cv2.GaussianBlur(img, (5, 5), 0)
-    diff = img - gaussian_filtered
-    normalized_diff = cv2.normalize(diff, None, 0.0, 1.0, cv2.NORM_MINMAX, cv2.CV_32F)
+    img = (img * 255).astype(np.uint8)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
 
-    return (img + normalized_diff) / 2
+    gaussian_filtered = cv2.GaussianBlur(img, (5, 5), 0)
+    diff = cv2.absdiff(img, gaussian_filtered)
+    diff[:, :, 0] = cv2.normalize(diff[:, :, 0], None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+
+    img = cv2.cvtColor(img, cv2.COLOR_LAB2BGR)
+    return (img + cv2.cvtColor(diff, cv2.COLOR_LAB2BGR)) / 2
 
 
 def unsharp(image, sigma, strength):
